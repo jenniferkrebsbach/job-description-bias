@@ -10,13 +10,23 @@ import nltk
 nltk.download('stopwords')
 stop_words = set(stopwords.words('english'))
 
-# Paths to the text files for analysis
-directory = '/Users/jenniferkrebsbach'
-files_to_analyze = {
-    'male_coded': 'combined_man.txt',
-    'female_coded': 'combined_woman.txt',
-    'gender_neutral': 'combined_other.txt'
-}
+# Configurable directory paths
+data_dir = './data'
+feminine_words_path = os.path.join(data_dir, 'Female_words.txt')
+masculine_words_path = os.path.join(data_dir, 'Male_words.txt')
+
+# Load word lists
+def load_word_list(file_path):
+    with open(file_path, 'r') as file:
+        words = [line.strip().lower() for line in file if line.strip()]
+    return words
+
+feminine_words = load_word_list(feminine_words_path)
+masculine_words = load_word_list(masculine_words_path)
+
+# Job description files
+files_to_analyze = ['male_coded_jobs.txt', 'female_coded_jobs.txt', 'gender_neutral_jobs.txt']
+files_to_analyze_paths = [os.path.join(data_dir, file) for file in files_to_analyze]
 
 # Function to read and process the content of a file (removing stopwords)
 def read_file_and_clean(file_path):
