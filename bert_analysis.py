@@ -16,15 +16,23 @@ def load_word_list(file_path):
         words = [line.strip().lower() for line in file if line.strip()]
     return words
 
-feminine_words = load_word_list('/Users/jenniferkrebsbach/Female_words.txt')
-masculine_words = load_word_list('/Users/jenniferkrebsbach/Male_words.txt')
+# Configurable directory paths
+data_dir = './data'
+feminine_words_path = os.path.join(data_dir, 'Female_words.txt')
+masculine_words_path = os.path.join(data_dir, 'Male_words.txt')
 
-# Define paths to job description files
-job_descriptions = {
-    "male_coded": "/Users/jenniferkrebsbach/combined_man.txt",
-    "female_coded": "/Users/jenniferkrebsbach/combined_woman.txt",
-    "gender_neutral": "/Users/jenniferkrebsbach/combined_other.txt"
-}
+# Load word lists
+def load_word_list(file_path):
+    with open(file_path, 'r') as file:
+        words = [line.strip().lower() for line in file if line.strip()]
+    return words
+
+feminine_words = load_word_list(feminine_words_path)
+masculine_words = load_word_list(masculine_words_path)
+
+# Job description files
+files_to_analyze = ['male_coded_jobs.txt', 'female_coded_jobs.txt', 'gender_neutral_jobs.txt']
+files_to_analyze_paths = [os.path.join(data_dir, file) for file in files_to_analyze]
 
 # Debugging-enabled function to get embeddings for gendered words
 def get_embeddings(text, words_to_embed):
