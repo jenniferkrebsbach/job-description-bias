@@ -94,36 +94,7 @@ ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda x, _: f'{int(x)}%'))
 
 plt.show()
 
-# Plot 2: Top 5 Feminine and Masculine Words for Each File
-for file_label in proportions_df['file']:
-    subset = [d for d in word_data if d['file'] == file_label]
-    word_counts_df = pd.DataFrame(subset)
-    
-    # Separate by gender and get top 5 words for each
-    feminine_df = word_counts_df[word_counts_df['gender'] == 'feminine'].nlargest(5, 'count')
-    masculine_df = word_counts_df[word_counts_df['gender'] == 'masculine'].nlargest(5, 'count')
-    
-    # Plotting
-    fig, axes = plt.subplots(1, 2, figsize=(14, 6))
-    fig.suptitle(f'Top Gendered Words For {file_label} Job Descriptions', fontsize=16)
-    
-    # Feminine words plot with integer x-axis ticks
-    feminine_df.plot(kind='barh', x='word', y='count', ax=axes[0], color='purple', legend=False)
-    axes[0].set_title('Feminine Words')
-    axes[0].invert_yaxis()
-    axes[0].set_xlabel('Frequency of word occurrence')
-    axes[0].set_xticks(range(0, int(feminine_df['count'].max()) + 1))  # Set integer x-ticks only
-
-    # Masculine words plot
-    masculine_df.plot(kind='barh', x='word', y='count', ax=axes[1], color='lavender', legend=False)
-    axes[1].set_title('Masculine Words')
-    axes[1].invert_yaxis()
-    axes[1].set_xlabel('Frequency of word occurrence')
-    axes[1].set_xticks(range(0, int(masculine_df['count'].max()) + 1))  # Set integer x-ticks only
-    
-    plt.show()
-
-# Create a DataFrame for Plot 3 (Grouped Bar Chart)
+# Create a DataFrame for Plot 2 (Grouped Bar Chart)
 word_data_df = pd.DataFrame(word_data)
 pivot_df = word_data_df.pivot_table(
     index='word',
