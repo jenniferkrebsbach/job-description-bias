@@ -1,0 +1,10 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+authors:
+- family-names: "Jennifer M."
+  given-names: "Krebsbach"
+  orcid: "0000-0002-7934-0918"
+title: "Exploring Gender Bias in AI-Generated Job Descriptions"
+version: 1.0.0
+date-released: 2024-11-11
+url: "https://github.com/jenniferkrebsbach/job-description-bias"
