@@ -82,7 +82,7 @@ for file_path in files_to_analyze_paths:
 proportions_df = pd.DataFrame(results)
 
 # Plot 1: Proportion Comparison of Gendered Words
-ax = proportions_df.plot(x='file', kind='bar', stacked=False, color=['purple', 'lavender'], width=0.8, figsize=(10, 6))
+ax = proportions_df.plot(x='file', kind='bar', stacked=False, color=['#800080', '#ad81ad'], width=0.8, figsize=(10, 6))
 ax.set_ylabel('Proportion of Gendered Words (Relative to Word List)')
 ax.set_title('Feminine vs. Masculine Word Proportion by File')
 ax.set_xticklabels(proportions_df['file'], rotation=0)
@@ -105,7 +105,7 @@ pivot_df = word_data_df.pivot_table(
 ).reset_index()
 
 # Define custom colors for the bars
-colors = ['lavender', 'purple', 'mediumorchid']
+colors = ['#ad81ad', '#800080', '#690267']
 
 # Plot 3: Grouped Bar Chart for Word Comparison Across Files
 fig, ax = plt.subplots(figsize=(14, 8))
