@@ -5,8 +5,8 @@ import matplotlib.pyplot as plt
 
 # Configurable directory paths
 data_dir = './data'
-feminine_words_path = os.path.join(data_dir, 'Female_words.txt')
-masculine_words_path = os.path.join(data_dir, 'Male_words.txt')
+feminine_words_path = os.path.join(data_dir, 'female_words.txt')
+masculine_words_path = os.path.join(data_dir, 'male_words.txt')
 
 # Load word lists
 def load_word_list(file_path):
@@ -22,7 +22,7 @@ total_feminine_words = len(feminine_words)
 total_masculine_words = len(masculine_words)
 
 # Job description files to analyze
-files_to_analyze = ['male_coded_jobs.txt', 'female_coded_jobs.txt', 'gender_neutral_jobs.txt']
+files_to_analyze = ['male_coded.txt', 'female_coded.txt', 'gender_neutral.txt']
 files_to_analyze_paths = [os.path.join(data_dir, file) for file in files_to_analyze]
 
 # Function to read the content of a file
@@ -93,6 +93,7 @@ ax.set_xlabel('Job Title Type')
 ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda x, _: f'{int(x)}%'))
 
 plt.show()
+plt.savefig('gendered_analysis_similarity.png')
 
 # Create a DataFrame for Plot 2 (Grouped Bar Chart)
 word_data_df = pd.DataFrame(word_data)
@@ -124,3 +125,4 @@ plt.ylabel('Frequency')
 plt.xticks(rotation=45, ha='right')
 plt.tight_layout()
 plt.show()
+plt.savefig('gendered_analysis_clustering.png')
