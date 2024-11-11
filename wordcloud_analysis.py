@@ -12,8 +12,8 @@ stop_words = set(stopwords.words('english'))
 
 # Configurable directory paths
 data_dir = './data'
-feminine_words_path = os.path.join(data_dir, 'Female_words.txt')
-masculine_words_path = os.path.join(data_dir, 'Male_words.txt')
+feminine_words_path = os.path.join(data_dir, 'female_words.txt')
+masculine_words_path = os.path.join(data_dir, 'male_words.txt')
 
 # Load word lists
 def load_word_list(file_path):
@@ -25,8 +25,11 @@ feminine_words = load_word_list(feminine_words_path)
 masculine_words = load_word_list(masculine_words_path)
 
 # Job description files
-files_to_analyze = ['male_coded_jobs.txt', 'female_coded_jobs.txt', 'gender_neutral_jobs.txt']
-files_to_analyze_paths = [os.path.join(data_dir, file) for file in files_to_analyze]
+files_to_analyze = {
+    'female_coded': 'combined_woman.txt',
+    'male_coded': 'combined_man.txt',
+    'gender_neutral': 'combined_other.txt'
+}
 
 # Function to read and process the content of a file (removing stopwords)
 def read_file_and_clean(file_path):
@@ -36,7 +39,7 @@ def read_file_and_clean(file_path):
     return cleaned_words
 
 # Initialize a dictionary to store cleaned text data for each category
-text_data = {category: read_file_and_clean(os.path.join(directory, filename)) for category, filename in files_to_analyze.items()}
+text_data = {category: read_file_and_clean(os.path.join(data_dir, filename)) for category, filename in files_to_analyze.items()}
 
 # Generate word frequencies for each category
 word_frequencies = {category: Counter(text_data[category]) for category in text_data}
@@ -58,7 +61,8 @@ def create_wordcloud(frequencies, title):
     plt.title(title, fontsize=18)
     plt.axis('off')
     plt.show()
-
+    plt.savefig('wordcloud_analysis_frequencies_' + title + '.png')
+    
 # Create word clouds for each category excluding the top 3 words
 for category, frequencies in filtered_word_frequencies.items():
     title = f"Word Cloud for {category.replace('_', ' ').title()} Job Descriptions (Excluding Top 3 Words)"
