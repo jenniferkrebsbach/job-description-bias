@@ -18,22 +18,24 @@ def load_word_list(file_path):
 
 # Configurable directory paths
 data_dir = './data'
-feminine_words_path = os.path.join(data_dir, 'Female_words.txt')
-masculine_words_path = os.path.join(data_dir, 'Male_words.txt')
-
-# Load word lists
-def load_word_list(file_path):
-    with open(file_path, 'r') as file:
-        words = [line.strip().lower() for line in file if line.strip()]
-    return words
+feminine_words_path = os.path.join(data_dir, 'female_words.txt')
+masculine_words_path = os.path.join(data_dir, 'male_words.txt')
 
 feminine_words = load_word_list(feminine_words_path)
 masculine_words = load_word_list(masculine_words_path)
 
 # Job description files
-files_to_analyze = ['male_coded_jobs.txt', 'female_coded_jobs.txt', 'gender_neutral_jobs.txt']
+files_to_analyze = ['male_coded.txt', 'female_coded.txt', 'gender_neutral.txt']
 files_to_analyze_paths = [os.path.join(data_dir, file) for file in files_to_analyze]
 
+job_descriptions = {
+    'female_coded': 'combined_woman.txt',
+    'male_coded': 'combined_man.txt',
+    'gender_neutral': 'combined_other.txt'
+}
+for category in job_descriptions.keys():
+    job_descriptions[category] = os.path.join(data_dir, job_descriptions[category]) 
+    
 # Debugging-enabled function to get embeddings for gendered words
 def get_embeddings(text, words_to_embed):
     # Tokenize and convert text to tensors
@@ -151,6 +153,7 @@ plt.ylabel("Job Type")
 
 plt.tight_layout(rect=[0, 0.03, 1, 0.95])
 plt.show()
+plt.savefig('bert_analysis_cosine_similarity.png')
 
 # Plotting Clustered Bar Chart
 similarity_df = pd.DataFrame({
@@ -178,3 +181,4 @@ plt.title("Cosine Similarity of Gendered Words Across Job Type Comparisons")
 plt.ylim(0, 1)
 plt.legend(title="Word Type")
 plt.show()
+plt.savefig('grouped_bar_chart.png')
