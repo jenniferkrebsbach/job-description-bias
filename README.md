@@ -1,10 +1,10 @@
 # job-description-bias
-# Gendered Language Analysis with BERT and Word Clouds
+# Gendered Language Analysis
 This project analyzes gendered language in job descriptions to identify patterns in word usage associated with male-coded, female-coded, and gender-neutral job descriptions. It includes scripts for:
 
 * Calculating gendered word frequencies
 * Generating visualizations for feminine and masculine word distribution
-* Running BERT-based similarity analysis
+* Running cosine similarity analysis
 * Clustering and word cloud generation
 
 
@@ -18,7 +18,7 @@ This project analyzes gendered language in job descriptions to identify patterns
 ## Project Structure
 This repository includes the following key files and folders:
 * gendered_analysis.py – Main analysis script for gendered word frequencies and visualizations
-* bert_analysis.py – BERT similarity and clustering analysis script
+* similarity_analysis.py – cosine similarity and clustering analysis script
 * wordcloud_analysis.py – Script for generating word clouds
 * data/ – Folder containing gendered word lists and job description text files
 * requirements.txt – Dependencies for running the analysis
@@ -60,13 +60,13 @@ This script will:
 * Calculate and display the percentage of feminine and masculine words in each job description file.
 * Generate bar charts for feminine vs. masculine word usage and the top words in each category.
 
-2. Run BERT Similarity and Clustering Analysis
+2. Run Cosine Similarity and Clustering Analysis
 
-```python bert_analysis.py```
+```python similarity_analysis.py```
 
 This script will:
 
-* Calculate cosine similarity between job description types for gendered words using BERT embeddings.
+* Calculate cosine similarity between job description types for gendered words using word embeddings.
 * Create a clustering plot to visualize similarities.
 
 3. Generate Word Clouds
@@ -80,7 +80,7 @@ This script will:
 ## Interpreting the Results
 * Frequency Visualizations:
   - The bar charts provide an overview of the distribution of gendered words across job description types.
-* BERT Analysis:
+* Similarity Analysis:
   - Cosine similarity values indicate how similar or different the job descriptions are in terms of gendered language.
   - The clustering plot visualizes the groupings of sentences based on gendered word usage.
 * Word Clouds:
