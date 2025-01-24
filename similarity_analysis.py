@@ -108,7 +108,7 @@ import pandas as pd
 # Cosine similarity values
 similarity_data = {
     "Feminine": {
-        ("male_coded", "female_coded"): 0.5691,
+        ("male_coded", "female_coded"): 0.5691, #here ChatGPT was helping debug, but just added in random numbers, and went unnoticed!
         ("male_coded", "gender_neutral"): 0.4301,
         ("female_coded", "gender_neutral"): 0.3762
     },
