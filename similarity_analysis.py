@@ -1,20 +1,35 @@
 import os
+import re
 import numpy as np
 import torch
 from transformers import BertTokenizer, BertModel
 from sklearn.metrics.pairwise import cosine_similarity
+import matplotlib.pyplot as plt
+import seaborn as sns
+import pandas as pd
+import nltk
+from nltk.corpus import stopwords
 
-# Load the pre-trained BERT model and tokenizer
+
+# Ensure stopwords are downloaded
+nltk.download('stopwords')
+stop_words = set(stopwords.words('english'))
+
+# Add custom words to exclude
+custom_stop_words = {'role', 'work', 'responsible', 'ensuring', 'join', 'ensure', 'seeking', 
+                    'maintaining', 'play', 'various', 'weather', 'also'}
+stop_words.update(custom_stop_words)
+
+# Load pre-trained BERT model and tokenizer
 tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
 model = BertModel.from_pretrained('bert-base-uncased')
-
 print("BERT model and tokenizer loaded successfully.")
 
-# Load the lemmatized gendered word lists
+# Function to load a word list
 def load_word_list(file_path):
     with open(file_path, 'r') as file:
         words = [line.strip().lower() for line in file if line.strip()]
-    return words
+    return set(words)  # Use a set for faster lookup
 
 # Configurable directory paths
 data_dir = './data'
@@ -33,150 +48,116 @@ job_descriptions = {
 
 for category in job_descriptions.keys():
     job_descriptions[category] = os.path.join(data_dir, job_descriptions[category]) 
-    
-# Debugging-enabled function to get embeddings for gendered words
+
+# Function to preprocess text
+def preprocess_text(text):
+    # Lowercase and remove punctuation
+    text = re.sub(r'[^\w\s]', '', text.lower())
+    return text
+
+# Function to get BERT embeddings for a list of words
 def get_embeddings(text, words_to_embed):
-    # Tokenize and convert text to tensors
-    tokens = tokenizer(text, return_tensors='pt', truncation=True, max_length=512)
+    preprocessed_text = preprocess_text(text)
+    tokens = tokenizer(preprocessed_text, return_tensors='pt', truncation=True, max_length=512)
     with torch.no_grad():
         outputs = model(**tokens)
     embeddings = outputs.last_hidden_state.squeeze(0)  # Shape: [sequence_length, hidden_size]
-    
-    # Extract embeddings for words of interest
+
+    # Extract embeddings for words in the list
     word_embeddings = []
     for word in words_to_embed:
-        word_tokens = tokenizer.tokenize(word)
-        word_ids = tokenizer.convert_tokens_to_ids(word_tokens)
-        
-        found = False  # Track if the word was found
-        for idx, input_id in enumerate(tokens['input_ids'].squeeze()):
-            if input_id in word_ids:
-                word_embeddings.append(embeddings[idx].numpy())
-                found = True
-        if found:
-            print(f"Embedding found for word: {word}")
-        else:
-            print(f"Word not found in text: {word}")
-                
-    # Return average embedding for words of interest
+        if word in preprocessed_text.split():
+            word_tokens = tokenizer.tokenize(word)
+            word_ids = tokenizer.convert_tokens_to_ids(word_tokens)
+            for idx, input_id in enumerate(tokens['input_ids'].squeeze()):
+                if input_id in word_ids:
+                    word_embeddings.append(embeddings[idx].numpy())
     return np.mean(word_embeddings, axis=0) if word_embeddings else None
 
-print("Function for embedding extraction defined successfully.")
-
-# Dictionary to store the embeddings for each job type
+# Dictionary to store embeddings
 job_embeddings = {}
 
-# Process each job description type
+# Process each job description
 for job_type, file_path in job_descriptions.items():
-    # Load the text content of each job description
     with open(file_path, 'r') as f:
         text = f.read()
     
-    # Get embeddings for feminine and masculine words
     feminine_embedding = get_embeddings(text, feminine_words)
     masculine_embedding = get_embeddings(text, masculine_words)
     
-    # Store embeddings if they exist
     if feminine_embedding is not None and masculine_embedding is not None:
         job_embeddings[job_type] = {
             "feminine": feminine_embedding,
             "masculine": masculine_embedding
         }
 
-print("Gendered word embeddings extracted for each job description type.")
+# Ensure embeddings were successfully created
+if not job_embeddings:
+    print("No embeddings were created. Check your input files and word lists.")
+    exit()
 
-# Calculate and display cosine similarities for feminine and masculine embeddings between job types
+# Calculate cosine similarities
+cosine_similarity_results = {"Feminine": {}, "Masculine": {}}
+
 for word_type in ["feminine", "masculine"]:
-    print(f"\nCosine Similarity for {word_type.capitalize()} words:")
     for job1 in job_embeddings:
         for job2 in job_embeddings:
             if job1 != job2:
-                if job_embeddings[job1][word_type] is not None and job_embeddings[job2][word_type] is not None:
-                    # Compute cosine similarity only if embeddings are valid
-                    sim = cosine_similarity(
-                        job_embeddings[job1][word_type].reshape(1, -1),
-                        job_embeddings[job2][word_type].reshape(1, -1)
-                    )[0][0]
-                    print(f"{job1} vs {job2}: {sim:.4f}")
-                else:
-                    print(f"Missing embeddings for comparison between {job1} and {job2} for {word_type} words.")
+                sim = cosine_similarity(
+                    job_embeddings[job1][word_type].reshape(1, -1),
+                    job_embeddings[job2][word_type].reshape(1, -1)
+                )[0][0]
+                cosine_similarity_results[word_type.capitalize()][(job1, job2)] = sim
 
-import matplotlib.pyplot as plt
-import seaborn as sns
-import pandas as pd
-
-# Cosine similarity values
-similarity_data = {
-    "Feminine": {
-        ("male_coded", "female_coded"): 0.5691, #here ChatGPT was helping debug, but just added in random numbers, and went unnoticed!
-        ("male_coded", "gender_neutral"): 0.4301,
-        ("female_coded", "gender_neutral"): 0.3762
-    },
-    "Masculine": {
-        ("male_coded", "female_coded"): 0.7400,
-        ("male_coded", "gender_neutral"): 0.8840,
-        ("female_coded", "gender_neutral"): 0.7920
-    }
-}
-
-# Convert data to DataFrame format for easier plotting
+# Create DataFrames for heatmaps
 heatmap_data_feminine = pd.DataFrame({
-    "male_coded": [1.0, similarity_data["Feminine"][("male_coded", "female_coded")], similarity_data["Feminine"][("male_coded", "gender_neutral")]],
-    "female_coded": [similarity_data["Feminine"][("male_coded", "female_coded")], 1.0, similarity_data["Feminine"][("female_coded", "gender_neutral")]],
-    "gender_neutral": [similarity_data["Feminine"][("male_coded", "gender_neutral")], similarity_data["Feminine"][("female_coded", "gender_neutral")], 1.0]
-}, index=["male_coded", "female_coded", "gender_neutral"])
+    "Male Coded": [1.0, cosine_similarity_results["Feminine"].get(("male_coded", "female_coded"), 0), cosine_similarity_results["Feminine"].get(("male_coded", "gender_neutral"), 0)],
+    "Female Coded": [cosine_similarity_results["Feminine"].get(("male_coded", "female_coded"), 0), 1.0, cosine_similarity_results["Feminine"].get(("female_coded", "gender_neutral"), 0)],
+    "Gender Neutral": [cosine_similarity_results["Feminine"].get(("male_coded", "gender_neutral"), 0), cosine_similarity_results["Feminine"].get(("female_coded", "gender_neutral"), 0), 1.0]
+}, index=["Male Coded", "Female Coded", "Gender Neutral"])
 
 heatmap_data_masculine = pd.DataFrame({
-    "male_coded": [1.0, similarity_data["Masculine"][("male_coded", "female_coded")], similarity_data["Masculine"][("male_coded", "gender_neutral")]],
-    "female_coded": [similarity_data["Masculine"][("male_coded", "female_coded")], 1.0, similarity_data["Masculine"][("female_coded", "gender_neutral")]],
-    "gender_neutral": [similarity_data["Masculine"][("male_coded", "gender_neutral")], similarity_data["Masculine"][("female_coded", "gender_neutral")], 1.0]
-}, index=["male_coded", "female_coded", "gender_neutral"])
+    "Male Coded": [1.0, cosine_similarity_results["Masculine"].get(("male_coded", "female_coded"), 0), cosine_similarity_results["Masculine"].get(("male_coded", "gender_neutral"), 0)],
+    "Female Coded": [cosine_similarity_results["Masculine"].get(("male_coded", "female_coded"), 0), 1.0, cosine_similarity_results["Masculine"].get(("female_coded", "gender_neutral"), 0)],
+    "Gender Neutral": [cosine_similarity_results["Masculine"].get(("male_coded", "gender_neutral"), 0), cosine_similarity_results["Masculine"].get(("female_coded", "gender_neutral"), 0), 1.0]
+}, index=["Male Coded", "Female Coded", "Gender Neutral"])
 
-# Plotting the Heatmap for Feminine Words
-plt.figure(figsize=(10, 5))
+# Plot heatmaps
+plt.figure(figsize=(12, 6))
 plt.suptitle('Cosine Similarity of Gendered Words Across Job Types')
 
+
+# Feminine words heatmap
 plt.subplot(1, 2, 1)
-sns.heatmap(heatmap_data_feminine, annot=True, cmap="Purples", vmin=0, vmax=1, square=True)
-plt.title("Feminine Words Similarity")
+sns.heatmap(
+    heatmap_data_feminine, 
+    annot=True, 
+    cmap="coolwarm",  
+    vmin=0, 
+    vmax=1, 
+    square=True,
+    annot_kws={"size": 12},  # Adjust font size for annotations
+    cbar_kws={'label': 'Cosine Similarity'}  # Add label to color bar
+)
+plt.title("Feminine Words Similarity", fontsize=12)
 plt.xlabel("Job Type")
 plt.ylabel("Job Type")
 
-# Plotting the Heatmap for Masculine Words
+# Masculine words heatmap
 plt.subplot(1, 2, 2)
-sns.heatmap(heatmap_data_masculine, annot=True, cmap="Blues", vmin=0, vmax=1, square=True)
-plt.title("Masculine Words Similarity")
+sns.heatmap(
+    heatmap_data_masculine, 
+    annot=True, 
+    cmap="coolwarm",  
+    vmin=0, 
+    vmax=1, 
+    square=True,
+    annot_kws={"size": 12},  # Adjust font size for annotations
+    cbar_kws={'label': 'Cosine Similarity'}  # Add label to color bar
+)
+plt.title("Masculine Words Similarity", fontsize=12)
 plt.xlabel("Job Type")
 plt.ylabel("Job Type")
-
 plt.tight_layout(rect=[0, 0.03, 1, 0.95])
 plt.show()
-plt.savefig('bert_analysis_cosine_similarity.png')
-
-# Plotting Clustered Bar Chart
-similarity_df = pd.DataFrame({
-    "Job Type Comparison": [
-        "male vs female", "male vs gender-neutral", "female vs gender-neutral"
-    ],
-    "Feminine Similarity": [
-        similarity_data["Feminine"][("male_coded", "female_coded")],
-        similarity_data["Feminine"][("male_coded", "gender_neutral")],
-        similarity_data["Feminine"][("female_coded", "gender_neutral")]
-    ],
-    "Masculine Similarity": [
-        similarity_data["Masculine"][("male_coded", "female_coded")],
-        similarity_data["Masculine"][("male_coded", "gender_neutral")],
-        similarity_data["Masculine"][("female_coded", "gender_neutral")]
-    ]
-})
-
-# Melt data for grouped bar chart
-similarity_melted = similarity_df.melt(id_vars="Job Type Comparison", var_name="Gendered Word Type", value_name="Similarity")
-
-plt.figure(figsize=(8, 6))
-sns.barplot(data=similarity_melted, x="Job Type Comparison", y="Similarity", hue="Gendered Word Type", palette=["purple", "blue"])
-plt.title("Cosine Similarity of Gendered Words Across Job Type Comparisons")
-plt.ylim(0, 1)
-plt.legend(title="Word Type")
-plt.show()
-plt.savefig('grouped_bar_chart.png')
+plt.savefig('cosine_similarity_heatmap.png')
