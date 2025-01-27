@@ -19,7 +19,11 @@ feminine_words = load_word_list(feminine_words_path)
 masculine_words = load_word_list(masculine_words_path)
 
 # Job description files to analyze
-files_to_analyze = ['male_coded.txt', 'female_coded.txt', 'gender_neutral.txt']
+files_to_analyze = {
+    'female_coded': 'combined_woman.txt',
+    'male_coded': 'combined_man.txt',
+    'gender_neutral': 'combined_other.txt'
+}
 files_to_analyze_paths = [os.path.join(data_dir, file) for file in files_to_analyze]
 
 
