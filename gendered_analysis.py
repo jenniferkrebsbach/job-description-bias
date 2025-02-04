@@ -24,7 +24,7 @@ files_to_analyze = {
     'male_coded': 'combined_man.txt',
     'gender_neutral': 'combined_other.txt'
 }
-files_to_analyze_paths = [os.path.join(data_dir, file) for file in files_to_analyze]
+files_to_analyze_paths = [os.path.join(data_dir, file) for file in files_to_analyze.values()]
 
 
 # Function to read the content of a file
@@ -50,7 +50,7 @@ def calculate_gendered_proportions(text, feminine_words, masculine_words):
 results = []
 word_data = []
 
-for file in files_to_analyze_paths:
+for file_path in files_to_analyze_paths:
     text = read_file(file_path)
     file_label = os.path.basename(file_path).replace('.txt', '').replace('_', ' ').title()
     
@@ -124,8 +124,9 @@ plt.savefig('gendered_analysis_similarity.png')
 word_data_df = pd.DataFrame(word_data)
 
 # Plot 2: Top 5 Feminine and Masculine Words for Each File
-for file in files_to_analyze:
-    subset = word_data_df[word_data_df['file'] == file]
+for file in files_to_analyze.values():
+    file_label = file.replace('.txt', '').replace('_', ' ').title()
+    subset = word_data_df[word_data_df['file'] == file_label]
     
     # Separate by gender and get top 5 words for each
     feminine_df = subset[subset['gender'] == 'feminine'].nlargest(5, 'count')
@@ -157,7 +158,7 @@ for file in files_to_analyze:
     
     plt.tight_layout()
     plt.show()
-    plt.savefig('gendered_analysis_top_five.png')
+    plt.savefig('gendered_analysis_top_five_' + file.replace('.txt','') + '.png')
     
 
 # Plot 3: All Words with Frequency > 4 Across Files
